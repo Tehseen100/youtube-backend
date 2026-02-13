@@ -18,13 +18,13 @@ const userSchema = new mongoose.Schema(
         },
         // cloudinary url
         avatar: {
-            url: { type: String },
-            public_id: { type: String }
+            url: String,
+            public_id: String
         },
         // cloudinary url
         coverImage: {
-            url: { type: String },
-            public_id: { type: String }
+            url: String,
+            public_id: String
         },
         email: {
             type: String,
