@@ -7,6 +7,7 @@ import {
 } from "../controllers/auth.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import verifyJWT from "../middlewares/auth.middleware.js";
+import isAuthenticated from "../middlewares/isAuthenticated.middleware.js";
 
 const router = Router();
 
@@ -27,6 +28,6 @@ router.post("/login", loginUser);
 router.post("/refresh-token", refreshAccessToken);
 
 // protected routes
-router.post("/logout", verifyJWT, logoutUser);
+router.post("/logout", verifyJWT, isAuthenticated, logoutUser);
 
 export default router;
