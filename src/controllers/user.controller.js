@@ -35,7 +35,7 @@ const changePassword = asyncHandler(async (req, res) => {
     }
 
     user.password = newPassword;
-    await user.save({ validateBeforeSave: false });
+    await user.save();
 
     return res
         .status(200)
@@ -113,7 +113,7 @@ const changeCoverImage = asyncHandler(async (req, res) => {
         public_id: coverImage?.public_id
     }
 
-    user.save({ validateBeforeSave: true });
+    await user.save({ validateBeforeSave: true });
 
     // Dlete old cover image
     if (oldCoverImagePublicId) {
