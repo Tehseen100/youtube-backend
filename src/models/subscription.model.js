@@ -7,7 +7,7 @@ const subscriptionSchema = new mongoose.Schema(
             ref: "User",
             required: true
         },
-        subscribedTo: {
+        channel: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
             required: true
@@ -20,7 +20,7 @@ const subscriptionSchema = new mongoose.Schema(
 
 // Prevent duplicate subscriptions
 subscriptionSchema.index(
-    { subscriber: 1, subscribedTo: 1 },
+    { subscriber: 1, channel: 1 },
     { unique: true }
 )
 
