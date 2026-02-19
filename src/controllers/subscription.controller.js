@@ -97,57 +97,9 @@ const getUserSubscribedChannels = asyncHandler(async (req, res) => {
 
 })
 
-const getUserSubscribersCount = asyncHandler(async (req, res) => {
-    const { userId } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-        throw new ApiError(400, "Invalid user ID")
-    }
-
-    const userExists = await User.findById(userId);
-
-    if (!userExists) {
-        throw new ApiError(404, "User not found")
-    }
-
-    const subscribersCount = await Subscription.countDocuments({
-        channel: userId
-    })
-
-    return res.status(200).json(
-        new ApiResponse(200, { subscribersCount }, "subscribers count fetched")
-    )
-
-})
-
-const getUserSubscribedChannelCount = asyncHandler(async (req, res) => {
-    const { userId } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-        throw new ApiError(400, "Invalid user ID")
-    }
-
-    const userExists = await User.findById(userId);
-
-    if (!userExists) {
-        throw new ApiError(404, "User not found")
-    }
-
-    const subscribedChannelCount = await Subscription.countDocuments({
-        subscriber: userId
-    })
-
-    return res.status(200).json(
-        new ApiResponse(200, { subscribedChannelCount }, "subscribed channel count fetched")
-    )
-
-})
-
 export {
     toggleSubscription,
     getUserChannelSubscribers,
     getUserSubscribedChannels,
-    getUserSubscribersCount,
-    getUserSubscribedChannelCount
 }
 
