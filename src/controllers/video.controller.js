@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { Video } from "../models/video.model";
+import { Video } from "../models/video.model.js";
 import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 import asyncHandler from '../utils/asyncHandler.js';
 import ApiError from "../utils/ApiError.js";
@@ -38,11 +38,13 @@ const uploadVideo = asyncHandler(async (req, res) => {
         description,
         thumbnail: {
             url: thumbnail?.secure_url,
-            public_id: thumbnail?.public_id
+            public_id: thumbnail?.public_id,
+            resource_type: thumbnail?.resource_type
         },
         video: {
             url: video?.secure_url,
-            public_id: video?.public_id
+            public_id: video?.public_id,
+            resource_type: video?.resource_type
         },
         duration: video?.duration,
         owner: req.user?._id
@@ -53,7 +55,7 @@ const uploadVideo = asyncHandler(async (req, res) => {
     }
 
     return res.status(201).json(
-        new ApiResponse(201, uploadedVideo, "Video uplaoded successfully")
+        new ApiResponse(201, uploadedVideo, "Video uploaded successfully")
     );
 
 })
@@ -84,13 +86,25 @@ const updateVideo = asyncHandler(async (req, res) => {
     const thumbnailLocalPath = req.file?.path;
 
     if (thumbnailLocalPath) {
+        const oldThumbnailPublicId = video.thumbnail?.public_id;
+        const oldThumbnailResource_type = video.thumbnail?.resource_type;
+
         const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
+
+        if (!thumbnail) {
+            throw new ApiError(500, "Thumbnail upload failed. Please try again")
+        }
 
         if (thumbnail) {
             updatedFields.thumbnail = {
                 url: thumbnail.secure_url,
-                public_id: thumbnail.public_id
+                public_id: thumbnail.public_id,
+                resource_type: thumbnail.resource_type
             };
+        }
+
+        if (oldThumbnailPublicId) {
+            await deleteFromCloudinary(oldThumbnailPublicId, oldThumbnailResource_type);
         }
     }
 
@@ -152,25 +166,27 @@ const deleteVideo = asyncHandler(async (req, res) => {
     }
 
     const thumbnailPublicId = video.thumbnail?.public_id;
+    const thumbnailResource_type = video.thumbnail?.resource_type;
     const videoPublicId = video.video?.public_id;
+    const videoResource_type = video.video?.resource_type;
+
+    // Delete video from DB
+    await video.deleteOne();
 
     // Delete files from cloudinary
     try {
 
         if (thumbnailPublicId) {
-            await deleteFromCloudinary(thumbnailPublicId)
+            await deleteFromCloudinary(thumbnailPublicId, thumbnailResource_type)
         }
 
         if (videoPublicId) {
-            await deleteFromCloudinary(videoPublicId);
+            await deleteFromCloudinary(videoPublicId, videoResource_type);
         }
 
     } catch (error) {
         throw new ApiError(500, "Something went wrong. Please try again")
     }
-
-    // Delete video from DB
-    await video.deleteOne();
 
     return res.status(200).json(
         new ApiResponse(200, {}, "Video deleted successfully")
@@ -178,7 +194,7 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
 })
 
-const getAllVideos = asyncHandler(async (req, res) => {
+const getMyVideos = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
 
@@ -188,7 +204,8 @@ const getAllVideos = asyncHandler(async (req, res) => {
         .populate("owner", "username avatar")
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(limit);
+        .limit(limit)
+        .lean();
 
     const totalVideos = await Video.countDocuments({ owner: req.user?._id });
     const totalPages = Math.ceil(totalVideos / limit);
@@ -229,16 +246,12 @@ const getVideoById = asyncHandler(async (req, res) => {
         throw new ApiError(403, "This video is not published")
     }
 
-    // video.views += 1;
-    // await video.save({ validateBeforeSave: false });
-
-    await Video.findByIdAndUpdate(videoId, {
-        $inc: { views: 1 }
-    });
+    video.views += 1;
+    await video.save({ validateBeforeSave: false });
 
     return res.status(200).json(
         new ApiResponse(200, video, "Video fetched successfully")
-    )
+    );
 
 })
 
@@ -247,6 +260,6 @@ export {
     updateVideo,
     togglePublishStatus,
     deleteVideo,
-    getAllVideos,
+    getMyVideos,
     getVideoById,
 }
