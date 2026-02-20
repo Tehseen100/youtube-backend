@@ -60,7 +60,7 @@ const uploadVideo = asyncHandler(async (req, res) => {
 
 })
 
-const updateVideo = asyncHandler(async (req, res) => {
+const updateVideoDetails = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
     const { title, description } = req.body;
 
@@ -83,31 +83,6 @@ const updateVideo = asyncHandler(async (req, res) => {
     if (title?.trim()) updatedFields.title = title;
     if (description?.trim()) updatedFields.description = description;
 
-    const thumbnailLocalPath = req.file?.path;
-
-    if (thumbnailLocalPath) {
-        const oldThumbnailPublicId = video.thumbnail?.public_id;
-        const oldThumbnailResource_type = video.thumbnail?.resource_type;
-
-        const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
-
-        if (!thumbnail) {
-            throw new ApiError(500, "Thumbnail upload failed. Please try again")
-        }
-
-        if (thumbnail) {
-            updatedFields.thumbnail = {
-                url: thumbnail.secure_url,
-                public_id: thumbnail.public_id,
-                resource_type: thumbnail.resource_type
-            };
-        }
-
-        if (oldThumbnailPublicId) {
-            await deleteFromCloudinary(oldThumbnailPublicId, oldThumbnailResource_type);
-        }
-    }
-
     if (Object.keys(updatedFields).length === 0) {
         return res.status(200).json(
             new ApiResponse(200, video, "No changes made")
@@ -120,6 +95,55 @@ const updateVideo = asyncHandler(async (req, res) => {
     return res.status(200).json(
         new ApiResponse(200, video, "Video updated successfully")
     );
+})
+
+const updateThumbnail = asyncHandler(async (req, res) => {
+    const { videoId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(videoId)) {
+        throw new ApiError(400, "Invalid video ID")
+    }
+
+    const video = await Video.findById(videoId);
+
+    if (!video) {
+        throw new ApiError(404, "Video not found")
+    }
+
+    if (!video.owner.equals(req.user?._id)) {
+        throw new ApiError(403, "You're not authorized to edit this video");
+    }
+
+    const thumbnailLocalPath = req.file?.path;
+
+    if (!thumbnailLocalPath) {
+        return new ApiResponse(200, video, "No changes made")
+    }
+
+    const oldThumbnailPublicId = video.thumbnail?.public_id;
+    const oldThumbnailResourceType = video.thumbnail?.resource_type;
+
+    const newThumbnail = await uploadOnCloudinary(thumbnailLocalPath);
+
+    if (!newThumbnail) {
+        throw new ApiError(500, "Thumbnail upload failed. Please try again")
+    }
+
+    video.thumbnail = {
+        url: newThumbnail?.secure_url,
+        public_id: newThumbnail?.public_id,
+        resource_type: newThumbnail?.resource_type
+    }
+    await video.save({ validateBeforeSave: false });
+
+    if (oldThumbnailPublicId) {
+        await deleteFromCloudinary(oldThumbnailPublicId, oldThumbnailResourceType);
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, video, "Thumbnail updated successfully")
+    );
+
 })
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
@@ -257,7 +281,8 @@ const getVideoById = asyncHandler(async (req, res) => {
 
 export {
     uploadVideo,
-    updateVideo,
+    updateVideoDetails,
+    updateThumbnail,
     togglePublishStatus,
     deleteVideo,
     getMyVideos,
