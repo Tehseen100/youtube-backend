@@ -16,12 +16,14 @@ const videoSchema = new mongoose.Schema(
         // cloudinary url
         video: {
             url: { type: String, required: true },
-            public_id: { type: String, required: true }
+            public_id: { type: String, required: true },
+            resource_type: { type: String, required: true }
         },
         // cloudinary url
         thumbnail: {
             url: { type: String, required: true },
-            public_id: { type: String, required: true }
+            public_id: { type: String, required: true },
+            resource_type: { type: String, required: true }
         },
         duration: {
             type: Number,
