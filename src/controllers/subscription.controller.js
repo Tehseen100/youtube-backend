@@ -16,7 +16,8 @@ const toggleSubscription = asyncHandler(async (req, res) => {
         throw new ApiError(400, "You cannot subscribe to yourself");
     }
 
-    const channelExists = await User.findById(channelId);
+    // const channelExists = await User.findById(channelId);
+    const channelExists = await User.exists({ _id: channelId });
 
     if (!channelExists) {
         throw new ApiError(404, "Channel not found");
@@ -26,7 +27,6 @@ const toggleSubscription = asyncHandler(async (req, res) => {
         subscriber: req.user?._id,
         channel: channelId
     });
-
 
     if (existingSubscription) {
         // Unsubscribe
@@ -56,7 +56,8 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid user ID");
     }
 
-    const userExists = await User.findById(userId);
+    // const userExists = await User.findById(userId);
+    const userExists = await User.exists({ _id: userId });
 
     if (!userExists) {
         throw new ApiError(404, "User not found");
@@ -64,11 +65,14 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
 
     const subscribers = await Subscription
         .find({ channel: userId })
-        .populate("subscriber", "username avatar coverImage")
+        .populate("subscriber", "username avatar")
+        .select("subscriber")
         .lean();
 
+    const formattedData = subscribers.map(sub => sub.subscriber);
+
     return res.status(200).json(
-        new ApiResponse(200, subscribers, "Subscribers fetched successfully")
+        new ApiResponse(200, formattedData, "Subscribers fetched successfully")
     );
 
 })
@@ -80,7 +84,8 @@ const getUserSubscribedChannels = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid user ID")
     }
 
-    const userExists = await User.findById(userId);
+    // const userExists = await User.findById(userId);
+    const userExists = await User.exists({ _id: userId });
 
     if (!userExists) {
         throw new ApiError(404, "User not found")
@@ -88,12 +93,15 @@ const getUserSubscribedChannels = asyncHandler(async (req, res) => {
 
     const subscribedChannels = await Subscription
         .find({ subscriber: userId })
-        .populate("channel", "username avatar coverImage")
+        .populate("channel", "username avatar")
+        .select("channel")
         .lean();
 
+    const formattedData = subscribedChannels.map((ch) => ch.channel);
+
     return res.status(200).json(
-        new ApiResponse(200, subscribedChannels, "Subscribed channels fetched successfully")
-    )
+        new ApiResponse(200, formattedData, "Subscribed channels fetched successfully")
+    );
 
 })
 
