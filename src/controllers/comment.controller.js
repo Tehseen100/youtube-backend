@@ -10,7 +10,7 @@ const addComment = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
     const { content } = req.body;
 
-    if (!content.trim()) {
+    if (!content?.trim()) {
         throw new ApiError(400, "Comment content is required")
     }
 
