@@ -6,6 +6,7 @@ import userRoutes from "./routes/user.routes.js";
 import subscriptionRoutes from "./routes/subscription.routes.js";
 import videosRoutes from "./routes/video.routes.js";
 import commentRoutes from "./routes/comment.routes.js";
+import likeRoutes from "./routes/like.routes.js";
 import errorHandler from "./middlewares/error.middleware.js";
 import notFound from "./middlewares/notFound.middleware.js";
 
@@ -27,6 +28,7 @@ app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/subscriptions", subscriptionRoutes);
 app.use("/api/v1/videos", videosRoutes);
 app.use("/api/v1/comments", commentRoutes);
+app.use("/api/v1/likes", likeRoutes)
 
 // Not found middleware
 app.use(notFound);
