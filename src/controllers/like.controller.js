@@ -29,7 +29,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         await Like.deleteOne({ _id: alreadyLiked._id });
 
         return res.status(200).json(
-            new ApiResponse(200, {}, "Video unliked successfully")
+            new ApiResponse(200, { isLikedByUser: false }, "Video unliked successfully")
         );
     }
 
@@ -40,7 +40,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
     });
 
     return res.status(200).json(
-        new ApiResponse(200, {}, "Video liked successfully")
+        new ApiResponse(200, { isLikedByUser: true }, "Video liked successfully")
     );
 })
 
@@ -67,7 +67,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
         await Like.deleteOne({ _id: alreadyLiked._id });
 
         return res.status(200).json(
-            new ApiResponse(200, {}, "Comment unliked successfully")
+            new ApiResponse(200, { isLikedByUser: false }, "Comment unliked successfully")
         );
     }
 
@@ -78,7 +78,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
     });
 
     return res.status(200).json(
-        new ApiResponse(200, {}, "Comment liked successfully")
+        new ApiResponse(200, { isLikedByUser: true }, "Comment liked successfully")
     );
 
 })
