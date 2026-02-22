@@ -260,21 +260,78 @@ const getVideoById = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid video ID")
     }
 
-    const video = await Video.findById(videoId).populate("owner", "username avatar");
+    const video = await Video.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(videoId)
+            },
+        },
+        // Lookup video owner
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner",
+                pipeline: [
+                    {
+                        $project: { username: 1, avatar: 1 }
+                    }
+                ]
+            },
+        },
+        {
+            $unwind: "$owner"
+        },
+        // Lookup comments
+        {
+            $lookup: {
+                from: "comments",
+                localField: "_id",
+                foreignField: "video",
+                as: "comments"
+            }
+        },
+        // Lookup likes 
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "video",
+                as: "likes"
+            }
+        },
+        {
+            $addFields: {
+                commentsCount: { $size: "$comments" },
+                likesCount: { $size: "$likes" },
+                isLikedByUser: {
+                    $in: [
+                        new mongoose.Types.ObjectId(req.user?._id),
+                        "$likes.likedBy"
+                    ]
+                }
+            }
+        },
+        {
+            $project: {
+                comments: 0,
+                likes: 0
+            }
+        }
+    ]);
 
-    if (!video) {
-        throw new ApiError(404, "Video not found")
+    if (!video.length) {
+        throw new ApiError(404, "Video not found");
     }
 
-    if (!video.isPublished && video.owner._id.toString() !== req.user?._id?.toString()) {
-        throw new ApiError(403, "This video is not published")
-    }
-
-    video.views += 1;
-    await video.save({ validateBeforeSave: false });
+    await Video.updateOne(
+        { _id: videoId },
+        { $inc: { views: 1 } }
+    );
 
     return res.status(200).json(
-        new ApiResponse(200, video, "Video fetched successfully")
+        new ApiResponse(200, video[0], "Video fetched successfully")
     );
 
 })
