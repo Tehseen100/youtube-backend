@@ -168,7 +168,6 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 })
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {
-
     const { username } = req.params;
 
     if (!username?.trim()) {
@@ -202,16 +201,10 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
                 subscribersCount: { $size: "$subscribers" },
                 subscribedChannelCounts: { $size: "$subscribedTo" },
                 isSubscribed: {
-                    $cond: {
-                        if: {
-                            $in: [
-                                new mongoose.Types.ObjectId(req.user?._id),
-                                "$subscribers.subscriber"
-                            ]
-                        },
-                        then: true,
-                        else: false
-                    }
+                    $in: [
+                        new mongoose.Types.ObjectId(req.user?._id),
+                        "$subscribers.subscriber"
+                    ]
                 }
             }
         },

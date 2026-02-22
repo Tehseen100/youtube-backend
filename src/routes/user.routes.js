@@ -4,6 +4,7 @@ import {
     changeCoverImage,
     changePassword,
     getCurrentUser,
+    getUserChannelProfile,
     updateAccountDetails
 } from "../controllers/user.controller.js";
 import verifyJWT from "../middlewares/auth.middleware.js";
@@ -17,6 +18,7 @@ router.use(isAuthenticated);
 
 // Protected routes
 router.get("/current-user", getCurrentUser);
+router.get("/:username/channel-profile", getUserChannelProfile);
 router.post("/change-password", changePassword);
 router.patch("/update-account", updateAccountDetails);
 
