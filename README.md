@@ -266,7 +266,7 @@ http://localhost:3000
 
 **Tehseen Javed**  
 Backend Developer (Node.js | MongoDB) <br>
-Computer Systems Engineering Student @ Dawood University of Engineering & Technology <br>
+Computer Systems Engineering Student @ Dawood University of Engineering & Technology <br><br>
 GitHub: https://github.com/Tehseen100
 
 ---
